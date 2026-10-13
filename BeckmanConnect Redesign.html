@@ -1,0 +1,959 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>BeckmanConnect Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..800&family=JetBrains+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: editorial case-study column (~68ch) with wide breakouts for the segment explorer, prototype and models; sticky section index on top. */
+:root{
+  /* Beckman Coulter brand: Lochmara #007ACB, Malibu #84CFF8, Torch Red #EA0029 */
+  --surface:#f5f7fa; --raised:#ffffff; --sunken:#e9eef3;
+  --ink:#0f1720; --muted:#4a5868; --line:#d5dce4;
+  --brand:#007acb; --brand-text:#00629f; --on-brand:#ffffff; --brand-soft:#e3f1fc;
+  --accent:#ea0029; --accent-soft:#fde8eb;
+  --live:#a14a06; --live-soft:#fbe8cf;
+  --ok:#1e6e43; --ok-soft:#dcefe3; --critical:#b3261e; --critical-soft:#f8e1df;
+  --focus:#007acb;
+  --shadow:0 1px 2px rgba(18,32,30,.06),0 8px 24px rgba(18,32,30,.08);
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-ui:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s6:24px;--s8:32px;--s12:48px;--s16:64px;
+  --r-sm:4px;--r-md:8px;--r-lg:14px;
+  --col:min(100%,720px); --wide:min(100%,1120px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --surface:#0d131a; --raised:#151d26; --sunken:#090e13;
+  --ink:#e6edf4; --muted:#9fb0c2; --line:#273340;
+  --brand:#84cff8; --brand-text:#84cff8; --on-brand:#0d131a; --brand-soft:#14273a;
+  --accent:#ff5c6c; --accent-soft:#3a141a;
+  --live:#f2a54a; --live-soft:#3a2710;
+  --ok:#6cc591; --ok-soft:#14301f; --critical:#f28b82; --critical-soft:#3a1714;
+  --focus:#84cff8; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --surface:#0d131a; --raised:#151d26; --sunken:#090e13;
+  --ink:#e6edf4; --muted:#9fb0c2; --line:#273340;
+  --brand:#84cff8; --brand-text:#84cff8; --on-brand:#0d131a; --brand-soft:#14273a;
+  --accent:#ff5c6c; --accent-soft:#3a141a;
+  --live:#f2a54a; --live-soft:#3a2710;
+  --ok:#6cc591; --ok-soft:#14301f; --critical:#f28b82; --critical-soft:#3a1714;
+  --focus:#84cff8; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{background:var(--surface);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.6;padding-inline:var(--s4)}
+a{color:var(--brand-text)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+h1,h2,h3,h4{font-family:var(--f-display);font-weight:700;line-height:1.08;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h2{font-size:clamp(30px,4.6vw,44px);font-stretch:80%}
+h3{font-size:22px;font-stretch:90%}
+h4{font-size:17px;font-family:var(--f-ui);font-weight:600;letter-spacing:0}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:var(--s2);align-items:center}
+.eyebrow b{color:var(--brand-text);font-weight:600}
+.ui{font-family:var(--f-ui)}
+.mono{font-family:var(--f-mono)}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* top index */
+.index{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);border-top:3px solid var(--accent);margin-inline:calc(var(--s4) * -1);padding-inline:var(--s4)}
+.index-inner{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:var(--s6);padding-block:10px;overflow-x:auto;scrollbar-width:none}
+.index-inner::-webkit-scrollbar{display:none}
+.index .mark{font-family:var(--f-display);font-weight:800;font-stretch:75%;font-size:18px;letter-spacing:.01em;white-space:nowrap;color:var(--ink);text-decoration:none}
+.index nav{display:flex;gap:var(--s4)}
+.index nav a{font-family:var(--f-ui);font-size:13px;color:var(--muted);text-decoration:none;white-space:nowrap;padding-block:4px;border-bottom:2px solid transparent}
+.index nav a:hover,.index nav a.on{color:var(--ink);border-bottom-color:var(--brand-text)}
+
+main{display:flex;flex-direction:column;align-items:center;gap:var(--s16);padding-block:var(--s12) var(--s16)}
+section{width:var(--col);display:flex;flex-direction:column;gap:var(--s6);scroll-margin-top:64px}
+section.wide{width:var(--wide)}
+.prose{display:flex;flex-direction:column;gap:var(--s4);max-width:68ch}
+.lead{font-size:21px;line-height:1.55}
+
+/* hero */
+.hero{width:var(--wide);display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:var(--s12);align-items:end}
+.hero h1{font-size:clamp(44px,7.4vw,92px);font-stretch:68%;font-weight:800;line-height:.92;letter-spacing:-.015em}
+.hero h1 em{font-style:normal;color:var(--brand-text)}
+.hero .lead{margin-top:var(--s6);max-width:40ch}
+.waffle-wrap{display:flex;flex-direction:column;gap:var(--s3)}
+.waffle{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;max-width:340px}
+.waffle i{aspect-ratio:1;border-radius:3px;background:var(--accent);display:block}
+.waffle i.r{background:var(--brand)}
+.stat{display:flex;align-items:baseline;gap:var(--s3)}
+.stat strong{font-family:var(--f-display);font-weight:800;font-stretch:70%;font-size:64px;line-height:1;color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:var(--s4);font-family:var(--f-ui);font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block;background:var(--accent)}
+.legend i.r{background:var(--brand)}
+
+.facts{width:var(--wide);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+.facts div{padding:var(--s4) var(--s4) var(--s4) 0;display:flex;flex-direction:column;gap:var(--s1);min-width:0}
+.facts dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:0;font-family:var(--f-ui);font-size:15px;line-height:1.45}
+
+/* cards & grids */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s4)}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s4)}
+.panel{background:var(--raised);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s6);display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.panel p,.panel li{font-family:var(--f-ui);font-size:15px;line-height:1.55}
+.panel ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--brand-soft);color:var(--brand-text);align-self:flex-start;font-weight:600}
+.tag.live{background:var(--live-soft);color:var(--live)}
+.callout{border-left:0;background:var(--sunken);border-radius:var(--r-lg);padding:var(--s6);font-family:var(--f-display);font-stretch:85%;font-size:clamp(22px,3vw,30px);line-height:1.2;font-weight:600}
+.callout small{display:block;margin-top:var(--s3);font-family:var(--f-ui);font-size:14px;font-weight:400;color:var(--muted);font-stretch:100%}
+.note{font-family:var(--f-ui);font-size:13px;color:var(--muted);line-height:1.5}
+
+/* themes */
+.theme{display:grid;grid-template-columns:44px minmax(0,1fr);gap:var(--s4);padding-block:var(--s6);border-top:1px solid var(--line)}
+.theme:last-child{border-bottom:1px solid var(--line)}
+.theme .glyph{font-family:var(--f-display);font-stretch:62%;font-weight:800;font-size:44px;line-height:.9;color:var(--accent)}
+.theme-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s6)}
+.theme-body h3{grid-column:1/-1}
+.theme-body .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.theme-body p{font-family:var(--f-ui);font-size:15px;line-height:1.55}
+.theme-body .heard{font-family:var(--f-body);font-style:italic;font-size:17px}
+
+/* diagram */
+.figure{background:var(--raised);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s6);display:flex;flex-direction:column;gap:var(--s3)}
+.scroll-x{overflow-x:auto}
+svg text{font-family:var(--f-ui)}
+.d-node{fill:var(--raised);stroke:var(--line);stroke-width:1.5}
+.d-node.hot{fill:var(--accent-soft);stroke:var(--accent)}
+.d-node.cool{fill:var(--brand-soft);stroke:var(--brand-text)}
+.d-node.dark{fill:var(--ink);stroke:var(--ink)}
+.d-t{fill:var(--ink);font-size:13px;font-weight:600}
+.d-t.inv{fill:var(--surface)}
+.d-s{fill:var(--muted);font-size:11.5px}
+.d-arrow{stroke:var(--muted);stroke-width:1.5;fill:none}
+.d-arrow.brand{stroke:var(--brand-text);stroke-width:2}
+.d-arrow.live{stroke:var(--live);stroke-width:2;stroke-dasharray:5 4}
+.d-head{fill:var(--muted)}
+.d-head.brand{fill:var(--brand-text)}
+.d-center{fill:var(--accent);font-family:var(--f-display);font-weight:800;font-size:22px}
+.d-zone{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4}
+.d-zl{fill:var(--muted);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em}
+
+/* segment explorer */
+.tabs{display:flex;gap:var(--s2);flex-wrap:wrap}
+.tab{font-family:var(--f-ui);font-size:14px;font-weight:600;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:var(--raised);color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.seg{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.6fr);gap:var(--s6);background:var(--raised);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s8)}
+.seg-side{display:flex;flex-direction:column;gap:var(--s4)}
+.seg-side h3{font-size:30px;font-stretch:75%}
+.seg-side .who{font-family:var(--f-ui);font-size:15px;color:var(--muted)}
+.seg-meter{display:flex;flex-direction:column;gap:var(--s3);margin-top:var(--s2)}
+.meter{display:grid;grid-template-columns:96px minmax(0,1fr);gap:var(--s3);align-items:center;font-family:var(--f-ui);font-size:13px}
+.meter .bar{height:8px;background:var(--sunken);border-radius:99px;overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.seg-main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s6)}
+.seg-main .blk{display:flex;flex-direction:column;gap:6px;min-width:0}
+.seg-main .blk.full{grid-column:1/-1}
+.seg-main .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg-main p,.seg-main li{font-family:var(--f-ui);font-size:15px;line-height:1.55}
+.seg-main ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.seg-main .barrier{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:22px;line-height:1.2;color:var(--critical)}
+
+/* principles */
+.principles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border-top:2px solid var(--ink)}
+.principles div{padding:var(--s4) var(--s4) var(--s4) 0;display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.principles h4{font-family:var(--f-display);font-size:22px;font-stretch:78%;font-weight:700}
+.principles p{font-family:var(--f-ui);font-size:14px;line-height:1.5;color:var(--muted)}
+
+/* prototype */
+.proto{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:var(--s8);align-items:start}
+.proto-controls{display:flex;flex-direction:column;gap:var(--s4);order:2;min-width:0}
+.ctl-label{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg-pick{display:flex;flex-direction:column;gap:6px}
+.seg-pick button{font-family:var(--f-ui);font-size:14px;text-align:left;padding:10px 12px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--raised);color:var(--ink);cursor:pointer}
+.seg-pick button[aria-pressed="true"]{border-color:var(--brand-text);box-shadow:inset 0 0 0 1px var(--brand);background:var(--brand-soft)}
+.seg-pick b{display:block;font-weight:600}
+.seg-pick span{font-size:12.5px;color:var(--muted)}
+.why{background:var(--sunken);border-radius:var(--r-md);padding:var(--s4);font-family:var(--f-ui);font-size:14px;line-height:1.55;display:flex;flex-direction:column;gap:6px}
+.why b{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-text);font-weight:600}
+
+.device{order:1;min-width:0;background:var(--sunken);border-radius:22px;padding:var(--s3);border:1px solid var(--line)}
+.screen{background:var(--surface);border-radius:14px;overflow:hidden;border:1px solid var(--line);font-family:var(--f-ui);font-size:14px;line-height:1.45;min-height:560px;display:flex;flex-direction:column}
+.appbar{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:12px 16px;background:var(--raised);border-bottom:1px solid var(--line)}
+.appbar .brandname{font-family:var(--f-display);font-weight:800;font-stretch:75%;font-size:17px}
+.appbar .lab{font-size:12px;color:var(--muted)}
+.steps{display:flex;gap:0;background:var(--raised);border-bottom:1px solid var(--line);overflow-x:auto}
+.steps button{flex:1 0 auto;font-family:var(--f-ui);font-size:13px;font-weight:600;padding:10px 14px;border:0;border-bottom:2px solid transparent;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+.steps button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--brand-text)}
+.steps button .n{font-family:var(--f-mono);font-weight:500;margin-right:6px}
+.view{padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3);flex:1}
+.ticket{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;align-items:flex-start;background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.ticket .t1{font-weight:600}
+.ticket .t2{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.pill{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--critical-soft);color:var(--critical);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.live{background:var(--live-soft);color:var(--live)}
+.pill.brand{background:var(--brand-soft);color:var(--brand-text)}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--raised);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.opt[aria-pressed="true"]{border-color:var(--brand-text);box-shadow:inset 0 0 0 1px var(--brand)}
+.opt .o1{font-weight:600}
+.opt .o2{font-size:13px;color:var(--muted);grid-column:1/-1}
+.opt .o3{font-family:var(--f-mono);font-size:12.5px;text-align:right;white-space:nowrap}
+.opt .rec{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--brand-text)}
+.btn{font-family:var(--f-ui);font-size:14px;font-weight:600;padding:11px 16px;border-radius:var(--r-md);border:1px solid var(--brand);background:var(--brand);color:var(--on-brand);cursor:pointer}
+.btn.ghost{background:var(--raised);color:var(--ink);border-color:var(--line)}
+.btn.warn{background:var(--raised);color:var(--critical);border-color:var(--critical)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+.sp{flex:1}
+.idcard{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--brand-soft);color:var(--brand-text);display:grid;place-items:center;font-weight:700;font-family:var(--f-display);font-size:18px}
+.idcard .n1{font-weight:600}
+.idcard .n2{font-size:12.5px;color:var(--muted)}
+.scope{background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md)}
+.scope-h{padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.scope-h span{font-weight:400;font-size:12.5px;color:var(--muted)}
+.sc{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sc:last-child{border-bottom:0}
+.sc .s1{font-weight:500}
+.sc .s2{font-size:12.5px;color:var(--muted);grid-column:1}
+.switch{position:relative;width:40px;height:24px;border-radius:99px;background:var(--line);border:0;cursor:pointer;grid-row:1/3;grid-column:2;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--raised);transition:left .15s}
+.switch[aria-checked="true"]{background:var(--brand)}
+.switch[aria-checked="true"]::after{left:19px}
+.switch:disabled{cursor:not-allowed;opacity:.55}
+.lock{grid-row:1/3;grid-column:2;font-size:12px;font-weight:600;color:var(--critical);white-space:nowrap}
+.approvers{display:flex;flex-direction:column;gap:6px;background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.appr{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;flex-wrap:wrap}
+.select{font:inherit;font-size:13.5px;padding:6px 8px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--raised);color:var(--ink)}
+.livebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--live-soft);border:1px solid var(--live);color:var(--ink);border-radius:var(--r-md);padding:10px 12px}
+.livebar.paused{background:var(--sunken);border-color:var(--line)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--live);flex:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--live) 25%,transparent)}
+.livebar.paused .dot{background:var(--muted);box-shadow:none}
+.livebar .lt{font-weight:600}
+.livebar .lt small{display:block;font-weight:400;font-size:12.5px;color:var(--muted)}
+.feed{background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md);display:flex;flex-direction:column}
+.fe{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13.5px}
+.fe:last-child{border-bottom:0}
+.fe .tm{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:1px}
+.fe .ask{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.fe .ask .btn{padding:6px 12px;font-size:13px}
+.boundary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bd{background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
+.bd b{font-size:13.5px}
+.rec-sum{background:var(--raised);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:10px}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 12px;font-size:13.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.sig{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);word-break:break-all}
+.stars{display:flex;gap:4px}
+.stars button{font-size:20px;border:0;background:none;color:var(--line);cursor:pointer;padding:2px}
+.stars button.on{color:var(--live)}
+
+/* model */
+.model{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:var(--s8);background:var(--raised);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s8)}
+.inputs{display:flex;flex-direction:column;gap:var(--s4)}
+.field{display:flex;flex-direction:column;gap:6px;font-family:var(--f-ui);font-size:14px}
+.field label{display:flex;justify-content:space-between;gap:8px}
+.field output{font-family:var(--f-mono);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--brand-text)}
+.outs{display:flex;flex-direction:column;gap:var(--s4)}
+.bigrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s4)}
+.big{display:flex;flex-direction:column;gap:2px}
+.big strong{font-family:var(--f-display);font-weight:800;font-stretch:70%;font-size:44px;line-height:1;font-variant-numeric:tabular-nums}
+.big span{font-family:var(--f-ui);font-size:13px;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:var(--s3)}
+.brow{display:grid;grid-template-columns:110px minmax(0,1fr) 80px;gap:var(--s3);align-items:center;font-family:var(--f-ui);font-size:13px}
+.track{height:26px;background:var(--sunken);border-radius:var(--r-sm);display:flex;overflow:hidden}
+.track i{display:block;height:100%}
+.track .on{background:var(--accent)}
+.track .re{background:var(--brand)}
+.brow .v{font-family:var(--f-mono);text-align:right}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--raised)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-family:var(--f-ui);font-size:14.5px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunken)}
+tr:last-child td{border-bottom:0}
+td b{font-weight:600}
+
+/* phases */
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:2px solid var(--ink)}
+.phase{padding:var(--s4) var(--s6) var(--s4) 0;display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.phase .when{font-family:var(--f-mono);font-size:12px;color:var(--brand-text);font-weight:600}
+.phase h3{font-size:24px;font-stretch:78%}
+.phase p,.phase li{font-family:var(--f-ui);font-size:14.5px;line-height:1.55}
+.phase ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+
+/* talk track */
+.track-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.tt{display:grid;grid-template-columns:72px minmax(0,1fr) minmax(0,1.3fr);gap:var(--s4);padding-block:var(--s3);border-bottom:1px solid var(--line);font-family:var(--f-ui);font-size:14.5px}
+.tt .min{font-family:var(--f-mono);color:var(--brand-text);font-weight:600}
+.tt b{font-weight:600}
+.tt span{color:var(--muted)}
+
+footer{width:var(--wide);border-top:1px solid var(--line);padding-top:var(--s4);font-family:var(--f-ui);font-size:13px;color:var(--muted)}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;gap:var(--s8)}
+  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid3,.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .seg{grid-template-columns:1fr;padding:var(--s6)}
+  .principles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .proto{grid-template-columns:1fr}
+  .proto-controls{order:0}
+  .model{grid-template-columns:1fr;padding:var(--s6)}
+  .phases{grid-template-columns:1fr}
+}
+@media (max-width:600px){
+  body{font-size:17px}
+  .grid2,.grid3,.grid4,.seg-main,.theme-body{grid-template-columns:1fr}
+  .principles{grid-template-columns:1fr}
+  .theme{grid-template-columns:1fr;gap:var(--s2)}
+  .bigrow{grid-template-columns:1fr 1fr}
+  .tt{grid-template-columns:56px minmax(0,1fr)}
+  .tt span{grid-column:2}
+  .brow{grid-template-columns:80px minmax(0,1fr) 64px}
+  .device{padding:6px;border-radius:16px}
+  .kv{grid-template-columns:1fr}
+  .kv dt{margin-top:6px}
+}
+</style>
+
+<header class="index">
+  <div class="index-inner">
+    <a class="mark" href="#top">BeckmanConnect</a>
+    <nav aria-label="Sections">
+      <a href="#problem">Problem</a>
+      <a href="#today">BeckmanConnect today</a>
+      <a href="#friction">Friction</a>
+      <a href="#research">Research</a>
+      <a href="#segments">Segments</a>
+      <a href="#principles">Principles</a>
+      <a href="#prototype">Prototype</a>
+      <a href="#security">Security</a>
+      <a href="#impact">Impact</a>
+      <a href="#metrics">Metrics</a>
+      <a href="#rollout">Rollout</a>
+      <a href="#talk">Talk track</a>
+      <a href="#sources">Sources</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow"><b>Case study</b> · BeckmanConnect Remote Support · Beckman Coulter Life Sciences</div>
+      <h1 style="margin-top:var(--s4)">Making remote service something labs <em>say yes to</em></h1>
+      <p class="lead">BeckmanConnect lets our support specialists fix most instrument faults without anyone getting in a car. Most customers still ask for someone onsite. This case study is about why, and the redesign I proposed to close that gap for commercial, mid-size and small laboratories.</p>
+    </div>
+    <div class="waffle-wrap" aria-label="76 of every 100 customers prefer onsite maintenance">
+      <div class="stat"><strong class="num">76%</strong><span class="ui muted" style="font-size:15px;line-height:1.35">of customers prefer onsite maintenance over remote or hybrid service</span></div>
+      <div class="waffle" id="waffle" aria-hidden="true"></div>
+      <div class="legend"><span><i></i>Prefer onsite</span><span><i class="r"></i>Open to remote or hybrid</span></div>
+    </div>
+  </div>
+
+  <dl class="facts">
+    <div><dt>My role</dt><dd>UX Lead: research, service strategy, interaction and system design</dd></div>
+    <div><dt>Partners</dt><dd>Field service engineering, product management, IT security, QA/regulatory</dd></div>
+    <div><dt>Methods</dt><dd>Stakeholder interviews, focus groups, service journey mapping, concept testing</dd></div>
+    <div><dt>Output</dt><dd>Service blueprint, prototype of the customer flow, design system, rollout and metrics plan</dd></div>
+  </dl>
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="eyebrow"><b>The problem</b></div>
+    <h2>Demand is growing faster than the engineering team</h2>
+    <div class="prose">
+      <p>Our field engineering team is small compared with the service demand it carries. Every onsite visit costs travel time, and while a customer waits for an engineer, their instrument is down and their staff are blocked.</p>
+      <p>BeckmanConnect Remote Support already offers a hybrid model: specialists diagnose and fix remotely first, and when a part is needed the engineer arrives with a plan, tools and parts. It shortens downtime, speeds up production for customers and lets each engineer resolve more cases. The capability exists. Adoption does not: <b>76% of customers prefer onsite maintenance</b>, so most cases still go into the travel queue.</p>
+      <p>That makes this a design problem as much as a technical one. Customers are not rejecting a feature. They are declining to let someone they cannot see into a system they are accountable for.</p>
+    </div>
+    <div class="figure">
+      <div class="eyebrow">The loop we are stuck in</div>
+      <div class="scroll-x">
+        <svg viewBox="0 0 660 350" width="100%" style="min-width:540px;max-width:660px;display:block;margin:0 auto" role="img" aria-label="A loop: labs don't trust remote access, so they default to onsite requests, the engineer queue grows, downtime gets longer, and remote service never gets the chance to prove itself, which keeps trust low.">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+          </defs>
+          <rect class="d-node hot" x="230" y="20" width="180" height="56" rx="8"/>
+          <text class="d-t" x="320" y="44" text-anchor="middle">Labs don't trust</text>
+          <text class="d-t" x="320" y="62" text-anchor="middle">remote access</text>
+          <rect class="d-node" x="440" y="112" width="180" height="56" rx="8"/>
+          <text class="d-t" x="530" y="136" text-anchor="middle">Default to an</text>
+          <text class="d-t" x="530" y="154" text-anchor="middle">onsite request</text>
+          <rect class="d-node" x="355" y="272" width="180" height="56" rx="8"/>
+          <text class="d-t" x="445" y="296" text-anchor="middle">Engineer queue</text>
+          <text class="d-t" x="445" y="314" text-anchor="middle">and travel grow</text>
+          <rect class="d-node" x="105" y="272" width="180" height="56" rx="8"/>
+          <text class="d-t" x="195" y="296" text-anchor="middle">Instruments down</text>
+          <text class="d-t" x="195" y="314" text-anchor="middle">for days</text>
+          <rect class="d-node" x="20" y="112" width="180" height="56" rx="8"/>
+          <text class="d-t" x="110" y="136" text-anchor="middle">Remote never gets</text>
+          <text class="d-t" x="110" y="154" text-anchor="middle">to prove itself</text>
+          <path class="d-arrow" d="M410,58 Q470,70 505,108" marker-end="url(#ah)"/>
+          <path class="d-arrow" d="M540,170 Q530,235 480,268" marker-end="url(#ah)"/>
+          <path class="d-arrow" d="M352,300 L289,300" marker-end="url(#ah)"/>
+          <path class="d-arrow" d="M150,270 Q110,230 105,172" marker-end="url(#ah)"/>
+          <path class="d-arrow" d="M120,110 Q160,60 226,52" marker-end="url(#ah)"/>
+          <text class="d-center" x="320" y="185" text-anchor="middle">76%</text>
+          <text class="d-s" x="320" y="205" text-anchor="middle">choose onsite</text>
+        </svg>
+      </div>
+      <p class="note">Breaking any one link helps, but the first link, trust, is the only one design can move directly. The others follow from it.</p>
+    </div>
+  </section>
+
+  <!-- TODAY -->
+  <section id="today" class="wide">
+    <div class="eyebrow"><b>BeckmanConnect today</b> · from Beckman Coulter's published data</div>
+    <h2>The capability is proven. Adoption is the gap.</h2>
+    <div class="prose"><p>BeckmanConnect Remote Support lets Beckman Coulter support specialists connect to an instrument's controller PC, with the lab's approval, to diagnose faults, update software and change configuration. When a remote fix isn't possible, the session prepares the field engineer to arrive with a plan, tools and parts. It covers instruments such as CytoFLEX, DxFLEX, Biomek, Vi-CELL BLU, Navios and AQUIOS CL.</p></div>
+    <div class="grid4">
+      <div class="panel"><div class="stat"><strong class="num" style="color:var(--brand-text)">66%</strong></div><p>of issues resolved remotely on instruments enrolled in BeckmanConnect, against <b>22%</b> without it.</p><p class="note">Source: Beckman Coulter</p></div>
+      <div class="panel"><div class="stat"><strong class="num" style="color:var(--brand-text)">2 days</strong></div><p>less waiting, from remote resolution and root-cause diagnosis before a visit.</p><p class="note">Source: Beckman Coulter</p></div>
+      <div class="panel"><div class="stat"><strong class="num" style="color:var(--brand-text)">1.4</strong></div><p>ease rating from customers who used remote support, on a scale where 1 is extremely easy and 7 extremely difficult.</p><p class="note">Source: Beckman Coulter</p></div>
+      <div class="panel"><div class="stat"><strong class="num">76%</strong></div><p>of customers in our research still prefer onsite maintenance over remote or hybrid service.</p><p class="note">Source: our interviews and focus groups</p></div>
+    </div>
+    <div class="callout">Customers who try BeckmanConnect find it easy, and it works. The problem is getting them to the first session.
+      <small>Beckman also reports more than 70% of all service calls resolved remotely across support channels, with nearly 600 field service experts worldwide. Every case that starts remote instead of in the travel queue protects that small team's time.</small></div>
+  </section>
+
+  <!-- FRICTION -->
+  <section id="friction" class="wide">
+    <div class="eyebrow"><b>Where trust breaks today</b> · evidence from public documentation</div>
+    <h2>Six points where customers stall before the first session</h2>
+    <div class="prose"><p>Public reviews of BeckmanConnect are scarce, so I went to Beckman's own FAQ and security documents and cross-checked each friction point against our interviews. Most of the protection customers ask for already exists. They just can't see it.</p></div>
+    <div class="grid3">
+      <div class="panel"><span class="tag live">Security</span><h4>"It runs on TeamViewer"</h4><p>Remote desktop sharing uses a customized TeamViewer client. In June 2024 TeamViewer disclosed a breach of its corporate IT network, attributed to APT29. Beckman published a notice that its own servers weren't affected and its logs showed no unauthorized access.</p><p class="note">What it means: IT hears "TeamViewer" and stops the conversation before they see Beckman's own safeguards.</p></div>
+      <div class="panel"><span class="tag live">IT setup</span><h4>The first session needs IT</h4><p>Setup needs Windows admin rights, an IT requirements review, firewall rules for Beckman, Azure and TeamViewer servers on port 443, removing any existing TeamViewer, and on some systems antivirus updates or a certificate utility.</p><p class="note">What it means: a lab manager can't say yes alone.</p></div>
+      <div class="panel"><span class="tag live">Trust</span><h4>Controls exist but are hidden</h4><p>Every session needs a one-time password and on-screen approval, and Beckman staff sign in with two-factor authentication. But labs can't see who is on the remote access list, and session logs, kept for a year, are available only by emailing support.</p><p class="note">What it means: the lab has to take protection on faith.</p></div>
+      <div class="panel"><span class="tag live">Privacy</span><h4>PHI rules aren't shown when it matters</h4><p>File transfer is disabled on instruments that can hold personal health information, such as Navios EX, DxFLEX and AQUIOS CL. Customers aren't shown this when they approve a session.</p><p class="note">What it means: a strong safeguard earns no trust because nobody sees it.</p></div>
+      <div class="panel"><span class="tag live">Cost</span><h4>Eligibility is a surprise</h4><p>Remote support is available only during the warranty period or on a service plan, and no pricing is published.</p><p class="note">What it means: small labs can't tell whether trying remote will cost them.</p></div>
+      <div class="panel"><span class="tag live">Communication</span><h4>Status lives in Windows pop-ups</h4><p>Notices about configuration problems, updates and contract expiry arrive as Windows notifications, at most once a day per type, and instruments that were offline can miss them.</p><p class="note">What it means: problems that block remote help surface only when help is needed.</p></div>
+    </div>
+  </section>
+
+  <!-- RESEARCH -->
+  <section id="research">
+    <div class="eyebrow"><b>Research</b></div>
+    <h2>Four reasons customers say no</h2>
+    <div class="prose">
+      <p>I ran interviews and focus groups with the people who influence a service decision: lab managers, bench scientists, IT and security administrators, QA and compliance leads, procurement, and our own field engineers. Four themes came up in every group, and each one lines up with a friction point in the documentation above. They overlap, but each points at a different part of the experience.</p>
+    </div>
+    <div>
+      <div class="theme">
+        <div class="glyph">T</div>
+        <div class="theme-body">
+          <h3>Trust: "Who is on the other end, and what are they doing?"</h3>
+          <div><div class="k">Underlying concern</div><p>Remote work is invisible. Onsite, a lab manager can stand next to the engineer. Remotely, they lose sight of who is connected and what is being changed.</p></div>
+          <div><div class="k">Design implication</div><p>Make the engineer identifiable and every action visible as it happens, with the customer able to pause or end the session at any point.</p></div>
+        </div>
+      </div>
+      <div class="theme">
+        <div class="glyph">P</div>
+        <div class="theme-body">
+          <h3>Data privacy: "Will they see our samples and results?"</h3>
+          <div><div class="k">Underlying concern</div><p>Instruments sit next to sensitive data: patient-derived samples, proprietary assay results, unpublished research. Customers assume remote access means access to all of it.</p></div>
+          <div><div class="k">Design implication</div><p>Separate instrument health data from experiment data by default, and show that boundary in plain language before and during every session.</p></div>
+        </div>
+      </div>
+      <div class="theme">
+        <div class="glyph">S</div>
+        <div class="theme-body">
+          <h3>Security: "Are we opening a door into our network?"</h3>
+          <div><div class="k">Underlying concern</div><p>IT teams treat any persistent remote connection as an attack surface. For regulated labs, an unreviewed connection can also break validation and audit requirements.</p></div>
+          <div><div class="k">Design implication</div><p>No always-on access. Sessions are requested, approved, time-limited and recorded, and IT sets the policy once instead of reviewing every case.</p></div>
+        </div>
+      </div>
+      <div class="theme">
+        <div class="glyph">C</div>
+        <div class="theme-body">
+          <h3>Cost: "Am I paying the same for less?"</h3>
+          <div><div class="k">Underlying concern</div><p>Customers are not sure how remote service is priced, and some see it as a cheaper service sold at full price. Smaller labs fear surprise charges if a remote fix turns into a visit.</p></div>
+          <div><div class="k">Design implication</div><p>Show the price, the expected time to fix and the downtime of each option side by side before the customer chooses, and credit remote time if a visit is still needed.</p></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">Theme statements are synthesized from sessions. In the interview, swap in two or three verbatim quotes and the participant counts from your own research notes.</p>
+  </section>
+
+  <!-- SEGMENTS -->
+  <section id="segments" class="wide">
+    <div class="eyebrow"><b>Customer segments</b></div>
+    <h2>Same four concerns, different weight in each lab</h2>
+    <div class="prose"><p>The themes were shared across customers, but who decides and what blocks a "yes" changed with the size and regulatory load of the lab. One flow had to flex for all three.</p></div>
+    <div class="tabs" role="tablist" aria-label="Customer segment">
+      <button class="tab" role="tab" id="tab-commercial" aria-selected="true" aria-controls="segpanel" data-seg="commercial">Commercial &amp; regulated</button>
+      <button class="tab" role="tab" id="tab-medium" aria-selected="false" aria-controls="segpanel" data-seg="medium">Mid-size labs</button>
+      <button class="tab" role="tab" id="tab-small" aria-selected="false" aria-controls="segpanel" data-seg="small">Small labs</button>
+    </div>
+    <div class="seg" id="segpanel" role="tabpanel" aria-labelledby="tab-commercial"></div>
+    <p class="note">Concern weightings show relative emphasis observed across sessions, not survey scores.</p>
+  </section>
+
+  <!-- REFRAME + PRINCIPLES -->
+  <section id="principles">
+    <div class="eyebrow"><b>Reframe</b></div>
+    <div class="callout">Customers don't distrust remote service. They distrust access they can't see, limit or stop.
+      <small>So the goal shifted from "convince customers remote is safe" to "give customers the controls they have when an engineer is standing in the room."</small></div>
+    <div class="prose">
+      <p><b>How might we</b> let a lab manager approve remote help in under two minutes, with the confidence they would have watching an engineer at the bench?</p>
+      <p><b>How might we</b> let IT and QA set the rules once, so they are not a bottleneck on every service call?</p>
+      <p><b>How might we</b> make the cheaper, faster option feel like the better option, not the lesser one?</p>
+    </div>
+    <h3 style="margin-top:var(--s4)">Design principles</h3>
+    <div class="principles">
+      <div><h4>Visible</h4><p>Every action the engineer takes appears in the customer's feed as it happens.</p></div>
+      <div><h4>In your hands</h4><p>The customer approves, pauses and ends. Changes to settings need a second tap.</p></div>
+      <div><h4>Scoped</h4><p>Least access by default. Instrument health in, experiment data out. Every session expires.</p></div>
+      <div><h4>Provable</h4><p>Each session ends with a signed record that QA can file without rework.</p></div>
+      <div><h4>Priced upfront</h4><p>Cost, time to fix and downtime are shown for every option before anyone commits.</p></div>
+    </div>
+  </section>
+
+  <!-- PROTOTYPE -->
+  <section id="prototype" class="wide">
+    <div class="eyebrow"><b>Proposed design</b> · interactive prototype</div>
+    <h2>BeckmanConnect, redesigned: the customer side of a service call</h2>
+    <div class="prose"><p>The redesign is the customer-facing layer of BeckmanConnect. It covers four moments: choosing how to get help, approving access, watching the live session, and receiving the record. Switch the segment to see how the same flow adapts its defaults. All names, times and prices in the prototype are sample data.</p></div>
+    <div class="proto">
+      <div class="proto-controls">
+        <div class="ctl-label">View as</div>
+        <div class="seg-pick" id="segpick">
+          <button type="button" data-seg="commercial" aria-pressed="true"><b>Commercial &amp; regulated</b><span>Pharma QC lab · GxP</span></button>
+          <button type="button" data-seg="medium" aria-pressed="false"><b>Mid-size lab</b><span>University core facility</span></button>
+          <button type="button" data-seg="small" aria-pressed="false"><b>Small lab</b><span>Biotech start-up · no IT team</span></button>
+        </div>
+        <div class="why" id="why"></div>
+      </div>
+      <div class="device">
+        <div class="screen">
+          <div class="appbar"><span class="brandname">BeckmanConnect</span><span class="lab" id="labname"></span></div>
+          <div class="steps" role="tablist" aria-label="Service steps" id="steps">
+            <button role="tab" data-step="0" aria-selected="true"><span class="n">1</span>Choose service</button>
+            <button role="tab" data-step="1" aria-selected="false"><span class="n">2</span>Approve access</button>
+            <button role="tab" data-step="2" aria-selected="false"><span class="n">3</span>Live session</button>
+            <button role="tab" data-step="3" aria-selected="false"><span class="n">4</span>Service record</button>
+          </div>
+          <div class="view" id="view" role="tabpanel"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENGINEER SIDE -->
+  <section>
+    <div class="eyebrow"><b>The other side of the glass</b></div>
+    <h2>Built for a small engineering team</h2>
+    <div class="prose"><p>Trust gets customers to say yes. The engineer console makes each yes cheap to serve, so the same team covers more labs.</p></div>
+    <div class="grid3">
+      <div class="panel"><span class="tag">Triage</span><h4>Remote-first routing</h4><p>Instrument diagnostics arrive with the request. The console suggests remote, hybrid or onsite from the fault code and part history, so engineers stop phone-screening every case.</p></div>
+      <div class="panel"><span class="tag">Prepare</span><h4>Right part, first trip</h4><p>When a visit is needed, the remote diagnosis travels with it. Hybrid cases arrive with the part in the van, cutting repeat visits.</p></div>
+      <div class="panel"><span class="tag">Scale</span><h4>Parallel sessions</h4><p>Long instrument self-tests run unattended, so one engineer can supervise several remote sessions instead of waiting at one bench.</p></div>
+    </div>
+  </section>
+
+  <!-- SECURITY -->
+  <section id="security" class="wide">
+    <div class="eyebrow"><b>Security &amp; data model</b></div>
+    <h2>Most of the protection exists. Customers can't see it.</h2>
+    <div class="prose"><p>BeckmanConnect's architecture is already strong: outbound-only connections, per-session passwords, two-factor sign-in for Beckman staff, approval prompts and logs. The redesign doesn't start from zero. It moves each safeguard from a PDF on the website into the moment a lab decides.</p></div>
+    <div class="figure">
+      <div class="scroll-x">
+        <svg viewBox="0 0 860 250" width="100%" style="min-width:720px;display:block" role="img" aria-label="Inside the customer's lab, the instrument connects to its controller PC, which runs the BeckmanConnect client with approval prompts and a local log. The client makes an outbound-only encrypted connection on port 443 to Beckman's cloud and the remote relay, which uses a one-time password per session. Beckman support staff connect to the relay after signing in with SSO and two-factor authentication. The proposed BeckmanConnect app lets the lab approve, pause and end sessions.">
+          <defs>
+            <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head brand"/></marker>
+            <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+          </defs>
+          <rect class="d-zone" x="10" y="14" width="430" height="226" rx="12"/>
+          <text class="d-zl" x="26" y="34">CUSTOMER LAB NETWORK</text>
+          <rect class="d-node" x="30" y="130" width="150" height="70" rx="8"/>
+          <text class="d-t" x="105" y="160" text-anchor="middle">Instrument</text>
+          <text class="d-s" x="105" y="178" text-anchor="middle">e.g. CytoFLEX, Biomek</text>
+          <rect class="d-node cool" x="250" y="120" width="170" height="90" rx="8"/>
+          <text class="d-t" x="335" y="146" text-anchor="middle">Controller PC</text>
+          <text class="d-s" x="335" y="166" text-anchor="middle">BeckmanConnect client</text>
+          <text class="d-s" x="335" y="182" text-anchor="middle">approval prompts</text>
+          <text class="d-s" x="335" y="198" text-anchor="middle">local event log</text>
+          <rect class="d-node" x="250" y="44" width="170" height="52" rx="8"/>
+          <text class="d-t" x="335" y="66" text-anchor="middle">BeckmanConnect app</text>
+          <text class="d-s" x="335" y="83" text-anchor="middle">proposed: approve · pause · end</text>
+          <rect class="d-node" x="500" y="120" width="160" height="90" rx="8"/>
+          <text class="d-t" x="580" y="150" text-anchor="middle">Beckman cloud</text>
+          <text class="d-s" x="580" y="170" text-anchor="middle">+ remote relay</text>
+          <text class="d-s" x="580" y="186" text-anchor="middle">one-time password</text>
+          <rect class="d-node dark" x="700" y="120" width="150" height="90" rx="8"/>
+          <text class="d-t inv" x="775" y="158" text-anchor="middle">Beckman support</text>
+          <text class="d-t inv" x="775" y="176" text-anchor="middle" style="font-weight:400;font-size:11.5px">SSO + two-factor</text>
+          <path class="d-arrow" d="M182,165 L246,165" marker-end="url(#ah3)"/>
+          <path class="d-arrow" d="M335,98 L335,116" marker-end="url(#ah3)"/>
+          <path class="d-arrow brand" d="M422,165 L496,165" marker-end="url(#ah2)"/>
+          <text class="d-s" x="459" y="152" text-anchor="middle" style="fill:var(--brand-text);font-weight:600">outbound</text>
+          <text class="d-s" x="459" y="186" text-anchor="middle">443 only</text>
+          <path class="d-arrow" d="M697,165 L664,165" marker-end="url(#ah3)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Concern</th><th>Already true in BeckmanConnect</th><th>What the redesign adds</th></tr></thead>
+        <tbody>
+          <tr><td><b>Network exposure</b></td><td>Outbound-only HTTPS on port 443; no VPN, fixed IP or inbound access</td><td>An IT setup kit: one-page summary, allowlist and a connection check the lab can run itself</td></tr>
+          <tr><td><b>Who can connect</b></td><td>Only Beckman support staff in the lab's region, signed in with SSO and two-factor authentication; outside accounts are blocked</td><td>The access roster and the engineer's verified identity, shown before approval</td></tr>
+          <tr><td><b>Session access</b></td><td>A one-time password of 8+ characters per session; the lab approves screen view, control and file transfer in prompts</td><td>One approval screen with scopes in plain language and a time limit</td></tr>
+          <tr><td><b>Data</b></td><td>TLS 1.2 with AES-256 in transit; file transfer disabled on PHI instruments; ISO/IEC 27001 data centers; GDPR, with EU instruments served from the EU</td><td>A live data-boundary panel showing what is blocked and how many requests were made</td></tr>
+          <tr><td><b>Audit</b></td><td>Session and file-transfer logs kept for a year, available by email request</td><td>A signed record and full log in the app; export to the quality system, with Part 11 signatures for regulated labs</td></tr>
+          <tr><td><b>Third-party tool</b></td><td>Remote desktop runs on a customized TeamViewer client; altered installs lose Beckman's restrictions and show a warning</td><td>Security status and incident notices inside the app, so IT hears it from Beckman first</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">"Already true" items come from Beckman Coulter's BeckmanConnect FAQ, security highlights and IT security update (see Sources). "Redesign adds" items are design proposals for engineering and security review.</p>
+  </section>
+
+  <!-- COST -->
+  <section>
+    <div class="eyebrow"><b>Cost</b></div>
+    <h2>Make the better option look better</h2>
+    <div class="prose">
+      <p>Research showed cost worries were mostly about uncertainty, not price. The service selection screen compares options on the three things a lab manager is judged on: when the instrument is back, what it costs, and how much staff time it takes.</p>
+    </div>
+    <div class="grid2">
+      <div class="panel"><span class="tag">Transparency</span><h4>One screen, three options</h4><p>Remote, hybrid and onsite are priced and timed side by side, with the recommended option explained in one sentence.</p></div>
+      <div class="panel"><span class="tag">Risk reversal</span><h4>Remote time is credited</h4><p>If a remote session ends in a visit, the remote time is credited against it. Trying remote first never costs more.</p></div>
+      <div class="panel"><span class="tag">Eligibility</span><h4>Coverage shown before booking</h4><p>Remote support today requires warranty or a service plan. The app says whether an instrument is covered, and what a session costs if not, before the lab chooses.</p></div>
+      <div class="panel"><span class="tag live">To validate</span><h4>Pricing is a hypothesis</h4><p>Credits and introductory offers need commercial and finance sign-off. I proposed testing two framings in the pilot before committing.</p></div>
+    </div>
+  </section>
+
+  <!-- IMPACT -->
+  <section id="impact" class="wide">
+    <div class="eyebrow"><b>Business impact</b> · built on Beckman Coulter's published rates</div>
+    <h2>What moving adoption from 24% to 50% is worth</h2>
+    <div class="prose"><p>Beckman reports that 66% of issues are resolved remotely on enrolled instruments, against 22% without BeckmanConnect, and that remote resolution saves about two days of waiting. Combined with the 24% of customers open to remote today, the gap the redesign has to close becomes a number. Move the target to see it.</p></div>
+    <div class="model">
+      <div class="inputs">
+        <div class="field"><label for="m-req">Service cases <output id="o-req"></output></label><input type="range" id="m-req" min="500" max="20000" step="500" value="1000"></div>
+        <div class="field"><label for="m-target">Customers on remote-first service (target) <output id="o-target"></output></label><input type="range" id="m-target" min="24" max="90" step="1" value="50"></div>
+        <div class="field"><label for="m-en">Resolved remotely, enrolled · Beckman <output id="o-en"></output></label><input type="range" id="m-en" min="40" max="90" step="1" value="66"></div>
+        <div class="field"><label for="m-ne">Resolved remotely, not enrolled · Beckman <output id="o-ne"></output></label><input type="range" id="m-ne" min="5" max="40" step="1" value="22"></div>
+        <div class="field"><label for="m-days">Days of waiting saved per remote fix · Beckman <output id="o-days"></output></label><input type="range" id="m-days" min="0.5" max="5" step="0.5" value="2"></div>
+        <div class="field"><label for="m-onsite">Engineer hours per visit, incl. travel · assumption <output id="o-onsite"></output></label><input type="range" id="m-onsite" min="2" max="12" step="0.5" value="7"></div>
+      </div>
+      <div class="outs">
+        <div class="bigrow">
+          <div class="big"><strong id="r-visits">0</strong><span>site visits avoided</span></div>
+          <div class="big"><strong id="r-days">0</strong><span>instrument-days of waiting returned to customers</span></div>
+          <div class="big"><strong id="r-hours">0</strong><span>engineer hours freed</span></div>
+        </div>
+        <div class="bars" aria-live="polite">
+          <div class="ctl-label">Share of cases resolved remotely</div>
+          <div class="brow"><span>Today (24%)</span><div class="track" id="t-base"></div><span class="v" id="v-base"></span></div>
+          <div class="brow"><span id="l-target">Target</span><div class="track" id="t-target"></div><span class="v" id="v-target"></span></div>
+          <div class="legend"><span><i class="r"></i>Resolved remotely</span><span><i></i>Needs a site visit</span></div>
+        </div>
+        <p class="note">Model: remote share = adoption × enrolled rate + (1 − adoption) × not-enrolled rate. Visits avoided = cases × change in remote share. Only hours per visit is an assumption; replace it, and the case volume, with your service data.</p>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="panel"><span class="tag">Customers</span><h4>Instruments back days sooner</h4><p>Each case that resolves remotely instead of waiting for a visit returns about two days of instrument time, which is production, QC release or research time.</p></div>
+      <div class="panel"><span class="tag">Service team</span><h4>Capacity without hiring</h4><p>With about 600 field service experts worldwide, avoided visits are the cheapest way to cover growing demand. Visits that still happen arrive with the right part.</p></div>
+      <div class="panel"><span class="tag">Business</span><h4>A reason to stay on a plan</h4><p>Remote support is a service-plan benefit. Making it visible and trusted turns it into a reason to renew, rather than a feature most customers never switch on.</p></div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics" class="wide">
+    <div class="eyebrow"><b>Measuring success</b></div>
+    <h2>One goal, with guardrails</h2>
+    <div class="prose"><p><b>North star:</b> the share of eligible service cases that start on BeckmanConnect. Trust shows up first in the funnel (do people approve?), then in outcomes (does it work?), then in the business (does the team scale?).</p></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Layer</th><th>Metric</th><th>What it tells us</th><th>Signal to watch</th></tr></thead>
+        <tbody>
+          <tr><td><b>Trust</b></td><td>Enrollment to first session</td><td>Whether setup and IT review stop being the blocker</td><td>Days from install to first approved session</td></tr>
+          <tr><td><b>Trust</b></td><td>Consent completion rate</td><td>Whether people who see the approval screen go ahead</td><td>Drop-off by step and by scope item</td></tr>
+          <tr><td><b>Trust</b></td><td>Early ends and pauses</td><td>Discomfort during a session</td><td>Pauses followed by an end within 2 minutes</td></tr>
+          <tr><td><b>Trust</b></td><td>Repeat remote use per lab</td><td>Whether a first good session converts to a habit</td><td>Second remote case within 90 days</td></tr>
+          <tr><td><b>Outcome</b></td><td>Time to resolution and instrument downtime</td><td>The customer's real benefit</td><td>Median hours from request to resolved, by option</td></tr>
+          <tr><td><b>Outcome</b></td><td>First-time fix rate on hybrid visits</td><td>Whether remote diagnosis improves visits</td><td>Repeat visits within 30 days</td></tr>
+          <tr><td><b>Business</b></td><td>Cases per engineer per week; onsite visits avoided</td><td>Capacity freed for the team</td><td>Trend against request volume</td></tr>
+          <tr><td><b>Guardrail</b></td><td>Security incidents; data-boundary violations</td><td>The promise held</td><td>Must stay at zero</td></tr>
+          <tr><td><b>Guardrail</b></td><td>Customer satisfaction on remote vs onsite</td><td>Remote is not a worse experience</td><td>Parity or better</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ROLLOUT -->
+  <section id="rollout" class="wide">
+    <div class="eyebrow"><b>Rollout</b></div>
+    <h2>Start where a yes is easiest, then earn the hardest one</h2>
+    <div class="phases">
+      <div class="phase">
+        <span class="when">Phase 1 · pilot</span>
+        <h3>Mid-size labs</h3>
+        <p>Enough volume to learn quickly, some IT support, and less change-control overhead than regulated sites.</p>
+        <ul><li>Usability tests on the consent screen with lab managers and IT</li><li>Ship the IT setup kit and connection check</li><li>Instrument the trust funnel from day one</li></ul>
+      </div>
+      <div class="phase">
+        <span class="when">Phase 2 · expand</span>
+        <h3>Small labs</h3>
+        <p>Highest cost sensitivity and no IT team, so plain language and one-tap approval matter most.</p>
+        <ul><li>First session included</li><li>Guided setup the lab can finish without IT</li><li>Engineer intro call before the first session</li></ul>
+      </div>
+      <div class="phase">
+        <span class="when">Phase 3 · regulated</span>
+        <h3>Commercial &amp; GxP labs</h3>
+        <p>The largest accounts, and the longest sales and validation cycles. Arrive with evidence from phases 1 and 2.</p>
+        <ul><li>Validation package and security summary for IT and QA</li><li>Two-person approval and Part 11 signatures</li><li>Policy console for site-wide rules</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- RISKS -->
+  <section>
+    <div class="eyebrow"><b>Trade-offs</b></div>
+    <h2>Decisions I would defend, and what I would watch</h2>
+    <div class="grid2">
+      <div class="panel"><h4>Approval on every session</h4><p>Adds a step that slows the fastest cases. I kept it because it is the trust mechanism. IT can pre-approve read-only diagnostics, off by default.</p></div>
+      <div class="panel"><h4>Setting changes need a second tap</h4><p>Engineers worried this would slow them. In practice it replaces the "may I?" an engineer asks at the bench anyway, and it makes the audit trail meaningful.</p></div>
+      <div class="panel"><h4>Showing the onsite option at all</h4><p>Hiding it would raise remote numbers short term and cost trust long term. Customers choose; we recommend and explain.</p></div>
+      <div class="panel"><h4>Gateway hardware</h4><p>A lab gateway adds install effort. It is what makes data separation real rather than a policy promise, so it stays, with a software option to explore for small labs.</p></div>
+    </div>
+  </section>
+
+  <!-- TALK TRACK -->
+  <section id="talk">
+    <div class="eyebrow"><b>For the panel</b></div>
+    <h2>A 25-minute talk track</h2>
+    <div class="track-list">
+      <div class="tt"><span class="min">0–4</span><b>The business problem</b><span>BeckmanConnect resolves 66% of issues remotely, yet 76% of customers choose onsite. Show the evidence and the loop.</span></div>
+      <div class="tt"><span class="min">4–8</span><b>Research and reframe</b><span>Who I spoke to, the four themes, and the shift from "convince" to "give control".</span></div>
+      <div class="tt"><span class="min">8–11</span><b>Segments</b><span>Why one flow had to flex: decision-makers and blockers differ by lab size.</span></div>
+      <div class="tt"><span class="min">11–18</span><b>Prototype walkthrough</b><span>Run the flow as a small lab, then switch to commercial to show how defaults change.</span></div>
+      <div class="tt"><span class="min">18–21</span><b>Security and cost</b><span>Most protection already exists; the redesign makes it visible. Coverage and price up front.</span></div>
+      <div class="tt"><span class="min">21–25</span><b>Impact and rollout</b><span>Impact from Beckman published rates, metrics with guardrails, phased plan, trade-offs.</span></div>
+    </div>
+  </section>
+
+  <section id="sources">
+    <div class="eyebrow"><b>Sources</b></div>
+    <div class="prose" style="font-family:var(--f-ui);font-size:15px">
+      <p><a href="https://www.beckman.com/support/technical/beckmanconnect" target="_blank" rel="noopener">BeckmanConnect Remote Support</a>, Beckman Coulter: 66% vs 22% resolved remotely, two days less waiting, 1.4 ease rating, eligibility, supported instruments, ISO/IEC 27001 and GDPR.</p>
+      <p><a href="https://media.beckman.com/-/media/pdf-assets/service/faqs/2023/beckmanconnect_remote_support_faqs-2023-04.pdf" target="_blank" rel="noopener">BeckmanConnect Remote Support FAQs (2023)</a>: TeamViewer client, admin rights, port 443, one-time passwords, logs kept one year on request, notifications, PHI file-transfer rules.</p>
+      <p><a href="https://media.beckman.com/-/media/pdf-assets/service/security-highlights/2023/beckmanconnect_remote_support_security_highlights-2023-04.pdf" target="_blank" rel="noopener">BeckmanConnect Remote Support Security Highlights (2023)</a>: TLS 1.2 and AES-256, SSO and two-factor for staff, allow-listing, IT requirements review.</p>
+      <p><a href="https://www.beckman.com/service/instrument-optimization/beckmanconnect-support-tools/security" target="_blank" rel="noopener">BeckmanConnect IT Security Update</a>: Beckman's notice after the June 2024 TeamViewer incident.</p>
+      <p><a href="https://www.csoonline.com/article/2510221/teamviewer-targeted-by-apt29-hackers-containment-measures-in-place.html" target="_blank" rel="noopener">TeamViewer targeted by APT29</a>, CSO Online, June 2024.</p>
+      <p><a href="https://www.beckman.com/service" target="_blank" rel="noopener">Beckman Coulter Service</a>: more than 70% of service calls resolved remotely, nearly 600 field service experts.</p>
+      <p><a href="https://www.beckman.com/support/faq/services/beckmanconnect-remote-support-service" target="_blank" rel="noopener">How does BeckmanConnect work?</a>, Beckman Coulter FAQ.</p>
+      <p>Brand colors (Lochmara #007ACB, Malibu #84CFF8, Torch Red #EA0029) as listed by <a href="https://brandfetch.com/mybeckman.in" target="_blank" rel="noopener">Brandfetch</a>; confirm against the official brand guide.</p>
+    </div>
+  </section>
+
+  <footer>A design concept for a UX case study, not an official Beckman Coulter product page. Prototype names, times and prices are sample data. Beckman Coulter figures are as published in the sources above.</footer>
+</main>
+
+<script>
+(function(){
+  // waffle
+  var w=document.getElementById('waffle'),h='';
+  for(var i=0;i<100;i++){h+='<i'+(i>=76?' class="r"':'')+'></i>';}
+  w.innerHTML=h;
+
+  // section index highlight
+  var links=[].slice.call(document.querySelectorAll('.index nav a'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-40% 0px -55% 0px'});
+    links.forEach(function(a){var s=document.querySelector(a.getAttribute('href'));if(s)io.observe(s)});
+  }
+
+  // ---------- segments ----------
+  var SEG={
+    commercial:{
+      name:'Commercial & regulated labs',
+      who:'Pharma and biotech manufacturing, QC release labs, large clinical-research operations.',
+      w:{Trust:3,Privacy:4,Security:5,Cost:2},
+      barrier:'Security review and validation burden',
+      deciders:['IT / security approves any connection','QA owns change control and audit','Lab manager owns uptime'],
+      need:'Proof the connection is bounded and auditable before anyone will approve it, and a record that fits their quality system.',
+      design:['Two-person approval (lab manager + IT), QA notified','IT setup kit: allowlist, security summary and a connection check','Policy console: IT sets scopes and service windows once','21 CFR Part 11 e-signatures on the service record'],
+      signal:'IT approves the policy once; per-case approval drops from days to minutes.'
+    },
+    medium:{
+      name:'Mid-size labs',
+      who:'Contract research organizations, hospital and university core facilities, regional testing labs.',
+      w:{Trust:4,Privacy:5,Security:3,Cost:4},
+      barrier:'Shared instruments hold other people\'s data',
+      deciders:['Facility or lab manager decides','Central IT is consulted, not embedded','Principal investigators or clients own the data'],
+      need:'Confidence that one group\'s service call cannot expose another group\'s results, and clear costs against a fixed budget.',
+      design:['Data boundary shown up front and live during the session','Single approval with IT notified automatically','Side-by-side price, time and downtime per option','Service record shareable with instrument users'],
+      signal:'Consent completion above pilot baseline; repeat remote use within 90 days.'
+    },
+    small:{
+      name:'Small labs',
+      who:'Biotech start-ups, single-investigator academic labs, independent testing labs.',
+      w:{Trust:5,Privacy:3,Security:2,Cost:5},
+      barrier:'Cost uncertainty and no one to ask',
+      deciders:['The scientist or lab manager decides alone','No IT team, often no service contract specialist'],
+      need:'Plain language about what will happen, a known price, and a real person they can put a face to.',
+      design:['One-tap approval with a plain-language summary','Coverage and price shown before booking; remote time credited to a visit','Engineer photo, name and intro before the session','Setup they can finish without IT help'],
+      signal:'First-session conversion and satisfaction at parity with onsite.'
+    }
+  };
+  var segpanel=document.getElementById('segpanel');
+  function renderSeg(k){
+    var s=SEG[k],m='';
+    Object.keys(s.w).forEach(function(n){m+='<div class="meter"><span>'+n+'</span><div class="bar"><i style="width:'+(s.w[n]*20)+'%"></i></div></div>';});
+    segpanel.innerHTML='<div class="seg-side"><h3>'+s.name+'</h3><p class="who">'+s.who+'</p><div class="seg-meter"><div class="ctl-label">Concern weight</div>'+m+'</div></div>'+
+      '<div class="seg-main"><div class="blk full"><span class="k">Main barrier</span><p class="barrier">'+s.barrier+'</p></div>'+
+      '<div class="blk"><span class="k">Who decides</span><ul>'+s.deciders.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div>'+
+      '<div class="blk"><span class="k">What a yes needs</span><p>'+s.need+'</p></div>'+
+      '<div class="blk"><span class="k">Design response</span><ul>'+s.design.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div>'+
+      '<div class="blk"><span class="k">Success signal</span><p>'+s.signal+'</p></div></div>';
+    segpanel.setAttribute('aria-labelledby','tab-'+k);
+  }
+  var segTabs=[].slice.call(document.querySelectorAll('.tab[data-seg]'));
+  segTabs.forEach(function(t){t.addEventListener('click',function(){segTabs.forEach(function(x){x.setAttribute('aria-selected',x===t)});renderSeg(t.dataset.seg);});});
+  renderSeg('commercial');
+
+  // ---------- prototype ----------
+  var P={
+    commercial:{lab:'QC Lab 3 · Site B',price:{remote:'Included in plan',hybrid:'Included in plan',onsite:'Included in plan'},
+      approvers:[['Lab manager','You'],['IT security','Policy pre-approved']],notify:'QA is notified and receives the record.',
+      sampleLock:'Blocked by site policy',files:'Blocked by site policy',dur:'60',
+      why:['<b>Why it looks like this</b>','Two approvers: IT approved the policy once in the console, so only the lab manager acts per case.','Sample data and file transfer are locked by site policy, not by the lab manager.','The record carries Part 11 e-signatures and exports to the quality system.'],
+      record:'pt11'},
+    medium:{lab:'Flow Cytometry Core',price:{remote:'$180',hybrid:'$180 + visit',onsite:'$950'},
+      approvers:[['Facility manager','You']],notify:'Central IT is notified automatically.',
+      sampleLock:null,files:null,dur:'60',
+      why:['<b>Why it looks like this</b>','One approver: the facility manager, with IT informed rather than blocking.','The data boundary is prominent because instruments hold several groups\' data.','Prices are visible because the core works to a fixed service budget.'],
+      record:'share'},
+    small:{lab:'Lab of one · start-up',price:{remote:'$180 · no plan',hybrid:'Remote credited',onsite:'$950'},
+      approvers:[['You','Lab manager']],notify:'',
+      sampleLock:null,files:null,dur:'45',
+      why:['<b>Why it looks like this</b>','One tap to approve, with a plain-language summary of what will and won\'t happen.','Coverage is checked up front: no plan, so the price shows before booking, and remote time is credited if a visit follows.','The engineer\'s face and name come first: trust is personal when there is no IT team.'],
+      record:'rate'}
+  };
+  var state={seg:'commercial',step:0,choice:'remote',scopes:{logs:true,settings:true,screen:true,samples:false,files:false},approved:false,paused:false,ended:false,asked:'pending',stars:0};
+  var view=document.getElementById('view'),why=document.getElementById('why'),labname=document.getElementById('labname');
+  var stepBtns=[].slice.call(document.querySelectorAll('#steps button'));
+  var segBtns=[].slice.call(document.querySelectorAll('#segpick button'));
+
+  function ticket(){return '<div class="ticket"><div><div class="t1">Flow cytometer · Laser 2 power low</div><div class="t2">SN 7731-0042 · fault E-214 · reported 09:12</div></div><span class="pill">Instrument down</span></div>';}
+
+  function vChoose(p){
+    var opts=[
+      ['remote','Remote fix','Engineer connects now and adjusts laser calibration. Most E-214 faults are fixed this way.','Starts in ~30 min','Back up today',p.price.remote,true],
+      ['hybrid','Hybrid','Remote diagnosis now; if a part is needed, the engineer arrives with it.','Starts in ~30 min','1–2 days if part needed',p.price.hybrid,false],
+      ['onsite','Onsite visit','An engineer travels to your lab.','Next available Thu','Down ~4 days',p.price.onsite,false]];
+    var h=ticket()+'<div class="ctl-label" style="margin-top:4px">How do you want help?</div>';
+    opts.forEach(function(o){h+='<button class="opt" type="button" data-choice="'+o[0]+'" aria-pressed="'+(state.choice===o[0])+'"><span><span class="o1">'+o[1]+'</span>'+(o[6]?' <span class="rec">· Recommended</span>':'')+'</span><span class="o3">'+o[5]+'</span><span class="o2">'+o[2]+'</span><span class="o2 mono" style="font-size:12px">'+o[3]+' · '+o[4]+'</span></button>';});
+    h+='<div class="sp"></div><div class="row end"><button class="btn" type="button" data-go="1">'+(state.choice==='onsite'?'Book visit':'Continue')+'</button></div>';
+    return h;
+  }
+  function sw(key,label,desc,lock){
+    var on=state.scopes[key];
+    return '<div class="sc"><span class="s1">'+label+'</span>'+(lock?'<span class="lock">'+lock+'</span>':'<button type="button" class="switch" role="switch" aria-label="'+label+'" aria-checked="'+on+'" data-scope="'+key+'"'+(key==='logs'?' disabled title="Required for diagnosis"':'')+'></button>')+'<span class="s2">'+desc+'</span></div>';
+  }
+  function vApprove(p){
+    if(state.choice==='onsite'){return '<div class="rec-sum"><span class="pill brand" style="align-self:flex-start">Visit booked</span><p>An engineer will arrive Thursday. You can still switch to a remote session at any time before then.</p><button class="btn ghost" type="button" data-choiceback="remote">Try remote instead</button></div>';}
+    var h='<div class="idcard"><div class="avatar">DM</div><div><div class="n1">Dana M. · Field Service Engineer</div><div class="n2">Certified: flow cytometry · 9 yrs · ID verified today</div></div><span class="pill ok">Verified</span></div>';
+    h+='<div class="note">Only Beckman support staff in your region, signed in with two-factor authentication, can connect. A new one-time password is issued for this session.</div>';
+    h+='<div class="scope"><div class="scope-h">What Dana can access<span>'+p.dur+' minutes, then access ends</span></div>'+
+      sw('logs','Instrument logs and diagnostics','Needed to diagnose the fault. Required.')+
+      sw('settings','Change instrument settings','Each change asks you first.')+
+      sw('screen','See the instrument software screen','View only. You see what Dana sees.')+
+      sw('samples','Sample and result data','Experiment data stays in your lab.',p.sampleLock||null)+
+      sw('files','Transfer files','Off unless you turn it on.',p.files||null)+'</div>';
+    h+='<div class="approvers"><div class="ctl-label">Approval</div>';
+    p.approvers.forEach(function(a,i){h+='<div class="appr"><span>'+a[0]+'</span><span class="'+(i===0?'':'muted')+'">'+(i===0?(state.approved?'<span class="pill ok">Approved</span>':'Waiting for you'):a[1])+'</span></div>';});
+    if(p.notify)h+='<div class="note">'+p.notify+'</div>';
+    h+='</div><div class="note">No inbound access to your network. You can pause or end the session at any time.</div>';
+    h+='<div class="sp"></div><div class="row end"><button class="btn ghost" type="button" data-go="0">Back</button><button class="btn" type="button" data-approve="1">Approve '+p.dur+'-minute session</button></div>';
+    return h;
+  }
+  function vLive(p){
+    if(!state.approved){return '<div class="rec-sum"><p>No session yet. Nothing can connect until you approve access.</p><button class="btn" type="button" data-go="1">Review access</button></div>';}
+    if(state.ended){return '<div class="rec-sum"><span class="pill" style="align-self:flex-start">Session ended by you</span><p>Dana\'s access was removed immediately. Your instrument is unchanged since the last approved step.</p><button class="btn ghost" type="button" data-go="3">See the record so far</button></div>';}
+    var h='<div class="livebar'+(state.paused?' paused':'')+'"><span class="dot"></span><span class="lt">'+(state.paused?'Session paused':'Dana is connected')+'<small>'+(state.paused?'Dana can\'t see or change anything':'Viewing diagnostics · 38 min left')+'</small></span><span class="sp"></span><button class="btn ghost" type="button" data-pause="1">'+(state.paused?'Resume':'Pause')+'</button><button class="btn warn" type="button" data-end="1">End</button></div>';
+    h+='<div class="feed"><div class="fe"><span class="tm">10:02</span><span>Connected. Read instrument event log.</span></div><div class="fe"><span class="tm">10:05</span><span>Ran laser 2 power self-test. Result: 14.2 mW (spec 20 mW).</span></div>';
+    var askTxt='Dana wants to change <b>laser 2 power setpoint</b> from 85% to 100% and re-run calibration.';
+    if(state.asked==='pending'){h+='<div class="fe"><span class="tm">10:09</span><span>'+askTxt+'<span class="ask"><button class="btn" type="button" data-ask="yes"'+(state.paused?' disabled':'')+'>Allow change</button><button class="btn ghost" type="button" data-ask="no"'+(state.paused?' disabled':'')+'>Decline</button></span></span></div>';}
+    else if(state.asked==='yes'){h+='<div class="fe"><span class="tm">10:09</span><span>You allowed: laser 2 setpoint 85% → 100%.</span></div><div class="fe"><span class="tm">10:14</span><span>Calibration passed. Laser 2: 20.4 mW. <span class="pill ok">Fixed</span></span></div>';}
+    else{h+='<div class="fe"><span class="tm">10:09</span><span>You declined the setpoint change. Dana suggests a hybrid visit with a replacement laser.</span></div>';}
+    h+='</div><div class="boundary"><div class="bd"><b>Sample &amp; result data</b><span class="muted">Blocked · 0 requests</span></div><div class="bd"><b>Your network</b><span class="muted">No inbound access</span></div></div>';
+    h+='<div class="sp"></div><div class="row end"><button class="btn" type="button" data-go="3"'+(state.asked==='pending'?' disabled':'')+'>Finish and view record</button></div>';
+    return h;
+  }
+  function vRecord(p){
+    if(!state.approved){return '<div class="rec-sum"><p>The record appears here after a session.</p><button class="btn ghost" type="button" data-go="0">Start from the beginning</button></div>';}
+    var fixed=state.asked==='yes'&&!state.ended;
+    var h='<div class="rec-sum"><div class="row"><span class="pill '+(fixed?'ok':'live')+'">'+(fixed?'Resolved remotely':'Follow-up needed')+'</span><span class="sp"></span><span class="mono muted" style="font-size:12px">SR-24-08817</span></div>'+
+      '<dl class="kv"><dt>Downtime</dt><dd>'+(fixed?'1 h 2 min (onsite estimate: ~4 days)':'Hybrid visit scheduled with replacement part')+'</dd>'+
+      '<dt>Engineer</dt><dd>Dana M., ID verified</dd>'+
+      '<dt>Access used</dt><dd>Logs and diagnostics'+(state.asked==='yes'?', 1 approved setting change':'')+'</dd>'+
+      '<dt>Data boundary</dt><dd>Sample and result data: not accessed</dd>'+
+      '<dt>Approved by</dt><dd>'+p.approvers.map(function(a){return a[0]}).join(' + ')+'</dd></dl>';
+    if(p.record==='pt11'){h+='<div class="sig">e-signature (21 CFR Part 11): D. Mason, engineer · L. Ortiz, lab manager · log hash 9f3a…c21e</div><div class="row"><button class="btn" type="button">Export to quality system</button><button class="btn ghost" type="button">Download PDF</button></div>';}
+    else if(p.record==='share'){h+='<div class="sig">Signed by engineer and approver · log hash 9f3a…c21e</div><div class="row"><button class="btn" type="button">Share with instrument users</button><button class="btn ghost" type="button">Download PDF</button></div>';}
+    else{h+='<div class="ctl-label">How did that feel?</div><div class="stars" id="stars">';for(var i=1;i<=5;i++){h+='<button type="button" aria-label="'+i+' star'+(i>1?'s':'')+'" data-star="'+i+'" class="'+(i<=state.stars?'on':'')+'">★</button>';}h+='</div><div class="note">'+(state.stars?'Thanks. Remote time on this case is credited against any visit.':'Remote time is credited if a visit follows.')+'</div>';}
+    h+='<div class="note">Full session log kept for one year. View it here any time, no email request needed.</div></div><div class="sp"></div><div class="row end"><button class="btn ghost" type="button" data-reset="1">Run again</button></div>';
+    return h;
+  }
+  function render(){
+    var p=P[state.seg];
+    labname.textContent=p.lab;
+    why.innerHTML=p.why.map(function(x,i){return i===0?x:'<span>'+x+'</span>'}).join('');
+    segBtns.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.seg===state.seg)});
+    stepBtns.forEach(function(b){b.setAttribute('aria-selected',+b.dataset.step===state.step)});
+    if(p.sampleLock){state.scopes.samples=false;}
+    if(p.files){state.scopes.files=false;}
+    view.innerHTML=[vChoose,vApprove,vLive,vRecord][state.step](p);
+  }
+  view.addEventListener('click',function(e){
+    var t=e.target.closest('button');if(!t||t.disabled)return;
+    var d=t.dataset;
+    if(d.choice){state.choice=d.choice;}
+    else if(d.choiceback){state.choice=d.choiceback;state.step=1;}
+    else if(d.go){state.step=+d.go;}
+    else if(d.scope){state.scopes[d.scope]=!state.scopes[d.scope];}
+    else if(d.approve){state.approved=true;state.ended=false;state.paused=false;state.step=2;}
+    else if(d.pause){state.paused=!state.paused;}
+    else if(d.end){state.ended=true;state.paused=false;}
+    else if(d.ask){state.asked=d.ask;}
+    else if(d.star){state.stars=+d.star;}
+    else if(d.reset){state.step=0;state.choice='remote';state.approved=false;state.paused=false;state.ended=false;state.asked='pending';state.stars=0;state.scopes={logs:true,settings:true,screen:true,samples:false,files:false};}
+    render();
+  });
+  stepBtns.forEach(function(b){b.addEventListener('click',function(){state.step=+b.dataset.step;render();})});
+  segBtns.forEach(function(b){b.addEventListener('click',function(){state.seg=b.dataset.seg;render();})});
+  render();
+
+  // ---------- impact model ----------
+  function $(id){return document.getElementById(id)}
+  var fmt=function(n){return Math.round(n).toLocaleString('en-US')};
+  function model(){
+    var N=+$('m-req').value,T=+$('m-target').value/100,en=+$('m-en').value/100,ne=+$('m-ne').value/100,dd=+$('m-days').value,hv=+$('m-onsite').value,B=0.24;
+    $('o-req').textContent=fmt(N);$('o-target').textContent=Math.round(T*100)+'%';$('o-en').textContent=Math.round(en*100)+'%';$('o-ne').textContent=Math.round(ne*100)+'%';$('o-days').textContent=dd+' d';$('o-onsite').textContent=hv+' h';
+    function share(a){return a*en+(1-a)*ne;}
+    var b=share(B),t=share(T),avoided=Math.max(0,N*(t-b));
+    $('r-visits').textContent=fmt(avoided);
+    $('r-days').textContent=fmt(avoided*dd);
+    $('r-hours').textContent=fmt(avoided*hv);
+    function bar(el,r){el.innerHTML='<i class="re" style="width:'+(r*100)+'%"></i><i class="on" style="width:'+((1-r)*100)+'%"></i>';}
+    bar($('t-base'),b);bar($('t-target'),t);
+    $('v-base').textContent=(b*100).toFixed(0)+'%';$('v-target').textContent=(t*100).toFixed(0)+'%';
+    $('l-target').textContent='Target ('+Math.round(T*100)+'%)';
+  }
+  ['m-req','m-target','m-en','m-ne','m-days','m-onsite'].forEach(function(id){$(id).addEventListener('input',model)});
+  model();
+})();
+</script>
+
+</body></html>
